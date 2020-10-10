@@ -1,33 +1,33 @@
     name: Jarvis-OpenWrt-CI
- 
-on:
-  push:
+    on:
+        repository_dispatch:
+    push:
     branches: 
       - master
-  schedule:
+    schedule:
     - cron: 0 20 * * *
   # release:
   #   types: [published]
   
-  env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
-  FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: diy.config
-  DIY_OP_SH: diy-lede.sh
-  SSH_ACTIONS: true
-  UPLOAD_BIN_DIR: false
-  UPLOAD_CONFIG: true
-  UPLOAD_FIRMWARE: true
-  UPLOAD_COWTRANSFER: false
-  UPLOAD_WETRANSFER: false
-  TZ: Asia/Shanghai
+    env:
+        REPO_URL: https://github.com/coolsnowwolf/lede
+        REPO_BRANCH: master
+        FEEDS_CONF: feeds.conf.default
+        CONFIG_FILE: diy.config
+        DIY_OP_SH: diy-lede.sh
+        SSH_ACTIONS: true
+        UPLOAD_BIN_DIR: false
+        UPLOAD_CONFIG: true
+        UPLOAD_FIRMWARE: true
+        UPLOAD_COWTRANSFER: false
+        UPLOAD_WETRANSFER: false
+        TZ: Asia/Shanghai
 
-jobs:
+    jobs:
  
-  build:
- 
-    runs-on: ubuntu-latest
+     build:
+        runs-on: ubuntu-18.04
+#    runs-on: ubuntu-latest ubuntu-18.04
  
     steps:
  
@@ -55,12 +55,13 @@ jobs:
           # ln -s /mnt/openwrt/feeds ./feeds
           # ln -s /mnt/openwrt/staging_dir ./staging_dir
           df -h
-       - name: Update feeds
+          
+      - name: Update feeds
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           
-       - name: Generate configuration file
+      - name: Generate configuration file
         run: |
           rm -f ./.config*
           touch ./.config
@@ -202,17 +203,17 @@ jobs:
           sed -i 's/^[ \t]*//g' ./.config
           make defconfig
           
-       - name: Make download
+      - name: Make download
         run: |
           make download -j8
           find ./dl/ -size -1024c -exec rm -f {} \;
           df -h
           
-       - name: SSH远程连接服务器配置固件
-          uses: gdck/debugger-action@main
-          if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
+      - name: SSH远程连接服务器配置固件
+        uses: gdck/debugger-action@main
+        if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
       
-       - name: Compile firmware
+      - name: Compile firmware
         run: |
           make -j$(nproc) || make -j1 V=s
           echo "======================="
@@ -226,8 +227,61 @@ jobs:
        # - name: Prepare artifact
       #   run: find ./bin/targets/ -type d -name "packages" | xargs rm -rf {}
  
-      - name: Upload artifact
-        uses: actions/upload-artifact@master
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@master
+#        with:
+#          name: OpenWrt firmware
+#          path: ./bin/
+
+
+      - name: 检查github储存空间情况
+        if: (!cancelled())
+        run: df -hT
+
+      - name: 上传bin文件夹(固件+ipk)在github空间
+        uses: actions/upload-artifact@main
+        if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
         with:
-          name: OpenWrt firmware
-          path: ./bin/
+         name: OpenWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+        path: openwrt/bin
+
+      - name: 整理固件文件夹
+        id: organizer
+        run: |
+             rm -rf config && mkdir config
+             find openwrt/bin/targets/ -name "*config.buildinfo*" | xargs -i mv -f {} config        
+             cd openwrt/bin/targets/*/*
+             rm -rf packages && mkdir packages
+             find -name "*.buildinfo*" | xargs -i mv -f {} packages
+             find -name "*sha256sums*" | xargs -i mv -f {} packages
+             rm -rf packages
+             echo "::set-env name=FIRMWARE::$PWD"
+             echo "::set-output name=status::success"
+        
+      - name: 上传.config配置文件在github空间    
+        if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
+        uses: actions/upload-artifact@main
+        with:
+            name: config.buildinfo_${{ env.FILE_DATE }}
+            path: ./config    
+    
+      - name: 上传固件在github空间
+        uses: actions/upload-artifact@main
+        if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
+        with:
+            name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+      - name: 上传固件到奶牛快传
+        if: steps.organizer.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+        run: |
+           curl -fsSL git.io/file-transfer | sh
+           ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+           echo "::warning file=↓↓无需注册直接下载↓↓奶牛快传下载地址↓↓::$(cat cowtransfer.log | grep https)"
+           
+      - name: 上传固件到WeTransfer
+        if: steps.organizer.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+        run: |
+             curl -fsSL git.io/file-transfer | sh
+             ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
+             echo "::warning file=↓↓无需注册直接下载↓↓wetransfer下载地址↓↓::$(cat wetransfer.log | grep https)"
