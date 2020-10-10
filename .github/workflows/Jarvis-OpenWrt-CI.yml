@@ -13,7 +13,7 @@ on:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: 
+  CONFIG_FILE: diy.config
   DIY_OP_SH: diy-lede.sh
   SSH_ACTIONS: true
   UPLOAD_BIN_DIR: false
@@ -206,8 +206,9 @@ jobs:
           make download -j8
           find ./dl/ -size -1024c -exec rm -f {} \;
           df -h
+          
        - name: SSH远程连接服务器配置固件
-          uses: P3TERX/debugger-action@main
+          uses: gdck/debugger-action@main
           if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
       
        - name: Compile firmware
