@@ -1,6 +1,6 @@
-    #name: Jarvis-OpenWrt-CI
+name: Lede-OpenWrt 固件CI
 on:
-    repository_dispatch:
+   repository_dispatch:
     push:
     branches: 
              - master
