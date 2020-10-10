@@ -36,7 +36,8 @@ on:
   watch:
 #    types: started
 
-
+#手动点触发开始编译
+  workflow_dispatch: 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
