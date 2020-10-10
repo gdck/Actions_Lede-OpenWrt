@@ -22,11 +22,12 @@ on:
         UPLOAD_WETRANSFER: false
         TZ: Asia/Shanghai
 
-    jobs:
-     name: 编译OpenWrt-lede固件
-     build:
-        runs-on: ubuntu-18.04
-#    runs-on: ubuntu-latest ubuntu-18.04
+jobs:
+  build:
+    name: 编译OpenWrt-lede固件
+    runs-on: ubuntu-18.04
+    if: github.event.repository.owner.id == github.event.sender.id
+    
     steps:
     - name: 准备结束
       uses: actions/checkout@main
