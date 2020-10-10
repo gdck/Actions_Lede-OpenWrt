@@ -45,13 +45,13 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
           
-        - name: Update feeds
-          run: |
+    - name: Update feeds
+      run: |
              ./scripts/feeds update -a
              ./scripts/feeds install -a
           
-        - name: Generate configuration file
-          run: |
+    - name: Generate configuration file
+      run: |
                rm -f ./.config*
                touch ./.config
           #
