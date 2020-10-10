@@ -8,6 +8,21 @@ on:
     - cron: 0 20 * * *
   # release:
   #   types: [published]
+  
+  env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  CONFIG_FILE: 
+  DIY_OP_SH: diy-lede.sh
+  SSH_ACTIONS: true
+  UPLOAD_BIN_DIR: false
+  UPLOAD_CONFIG: true
+  UPLOAD_FIRMWARE: true
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
+  TZ: Asia/Shanghai
+
  
 jobs:
  
@@ -191,6 +206,10 @@ jobs:
           make download -j8
           find ./dl/ -size -1024c -exec rm -f {} \;
           df -h
+       - name: SSH远程连接服务器配置固件
+          uses: P3TERX/debugger-action@main
+          if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
+      
        - name: Compile firmware
         run: |
           make -j$(nproc) || make -j1 V=s
