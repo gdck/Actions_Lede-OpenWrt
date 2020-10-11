@@ -44,12 +44,13 @@ env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: diy.config
   DIY_OP_SH: diy-lede.sh
-  SSH_ACTIONS: true
-  UPLOAD_BIN_DIR: false
+  SSH_ACTIONS: false
+  #SSH_ACTIONS: true
+  UPLOAD_BIN_DIR: true
   UPLOAD_CONFIG: true
   UPLOAD_FIRMWARE: true
-  UPLOAD_COWTRANSFER: false
-  UPLOAD_WETRANSFER: false
+  UPLOAD_COWTRANSFER: true
+  UPLOAD_WETRANSFER: true
   TZ: Asia/Shanghai
 
 jobs:
@@ -105,7 +106,7 @@ jobs:
       uses: gdck/debugger-action@main
       if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
 
-    - name: 下载软件包
+    - name: download package下载软件包
       id: package
       run: |
         cd openwrt
@@ -114,7 +115,7 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: 开始编译固件
+    - name: compile openwrt 开始编译固件
       id: compile
       run: |
         cd openwrt
@@ -136,7 +137,7 @@ jobs:
         name: OpenWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: openwrt/bin
 
-    - name: 整理固件文件夹
+    - name: organizer整理固件文件夹
       id: organizer
       run: |
         rm -rf config && mkdir config
@@ -156,12 +157,12 @@ jobs:
         name: config.buildinfo_${{ env.FILE_DATE }}
         path: ./config    
     
-#    - name: 上传固件在github空间
-#      uses: actions/upload-artifact@main
-#      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
-#      with:
-#        name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
-#        path: ${{ env.FIRMWARE }}
+    - name: 上传固件在github空间
+      uses: actions/upload-artifact@main
+      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
+      with:
+        name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
 
     - name: Upload firmware directory 上传固件在github空间
       uses: actions/upload-artifact@master
