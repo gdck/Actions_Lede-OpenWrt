@@ -102,7 +102,7 @@ jobs:
         curl -fsSL  https://raw.githubusercontent.com/Lienol/openwrt-packages/19.07/net/https-dns-proxy/files/https-dns-proxy.init > openwrt/feeds/packages/net/https-dns-proxy/files/https-dns-proxy.init
     
     - name: SSH远程连接服务器配置固件
-      uses: P3TERX/debugger-action@main
+      uses: gdck/debugger-action@main
       if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
 
     - name: 下载软件包
@@ -130,7 +130,7 @@ jobs:
       run: df -hT
 
     - name: 上传bin文件夹(固件+ipk)在github空间
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@master
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
         name: OpenWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
@@ -151,28 +151,51 @@ jobs:
         
     - name: 上传.config配置文件在github空间    
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@master
       with:
         name: config.buildinfo_${{ env.FILE_DATE }}
         path: ./config    
     
-    - name: 上传固件在github空间
-      uses: actions/upload-artifact@main
-      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
-      with:
-        name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE }}
+#    - name: 上传固件在github空间
+#      uses: actions/upload-artifact@main
+#      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
+#      with:
+#        name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+#        path: ${{ env.FIRMWARE }}
 
-    - name: 上传固件到奶牛快传
-      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+    - name: Upload firmware directory 上传固件在github空间
+      uses: actions/upload-artifact@master
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+        
+
+#    - name: 上传固件到奶牛快传
+#      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+#      run: |
+#        curl -fsSL git.io/file-transfer | sh
+#        ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+#        echo "::warning file=↓↓无需注册直接下载↓↓奶牛快传下载地址↓↓::$(cat cowtransfer.log | grep https)"
+        
+    - name: Upload firmware to cowtransfer 上传固件到奶牛快传
+      if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
-        echo "::warning file=↓↓无需注册直接下载↓↓奶牛快传下载地址↓↓::$(cat cowtransfer.log | grep https)"
+        echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
 
-    - name: 上传固件到WeTransfer
-      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+#    - name: 上传固件到WeTransfer
+#      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+#      run: |
+#        curl -fsSL git.io/file-transfer | sh
+#        ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
+#        echo "::warning file=↓↓无需注册直接下载↓↓wetransfer下载地址↓↓::$(cat wetransfer.log | grep https)"
+        
+    - name: Upload firmware to WeTransfer 上传固件到WeTransfer
+      if: steps.organize.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
-        echo "::warning file=↓↓无需注册直接下载↓↓wetransfer下载地址↓↓::$(cat wetransfer.log | grep https)"
+        echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
+        
