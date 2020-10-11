@@ -5,12 +5,13 @@
 # 除了第一行的#!/bin/bash不要动，其他的设置，前面带#表示不起作用，不带的表示起作用了（根据你自己需要打开或者关闭）
 #
 
-# 修改openwrt登陆地址,把下面的192.168.2.2修改成你想要的就可以了
-#sed -i 's/192.168.1.1/192.168.2.2/g' ./package/base-files/files/bin/config_generate
+# 修改openwrt登陆地址,把下面的192.168.2.1修改成你想要的就可以了
+#sed -i 's/192.168.1.1/192.168.2.1/g' ./package/base-files/files/bin/config_generate
 
 
 # 修改主机名字，把OpenWrt-123修改你喜欢的就行（不能纯数字或者使用中文）
 #sed -i 's/OpenWrt/OpenWrt-123/g' ./package/base-files/files/bin/config_generate
+sed -i 's/OpenWrt/LEDE/g' ./package/base-files/files/bin/config_generate
 
 
 # 设置密码为空（安装固件时无需密码登陆，然后自己修改想要的密码）
@@ -18,7 +19,7 @@ sed -i 's@.*CYXluq4wUazHjmCDBCqXF*@#&@g' ./package/lean/default-settings/files/z
 
 
 # 使用源码自带ShadowSocksR Plus+出国软件
-sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
+#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
 
 
 # 修改banne文件（banne文件在根目录）（不要修改此行代码,怕弄的diy-lede.sh文件全失效,不需要的话前面加#，或者全行代码删除了）
@@ -45,6 +46,7 @@ svn co https://github.com/xiaorouji/openwrt-package/trunk/lienol/luci-app-passwa
 svn co https://github.com/xiaorouji/openwrt-package/trunk/package package/lean/package  #passwall出国软件配套
 git clone https://github.com/destan19/OpenAppFilter package/lean/luci-app-oaf #luci-app-oaf应用过滤
 git clone https://github.com/gdck/luci-app-cupsd package/lean/luci-app-cupsd # 苹果打印-cupsd
+git clone https://github.com/gdck/luci-app-qos-gargoyle package/lean/luci-app-qos-gargoyle #石像鬼QOS
 
 rm -rf ./package/lean/luci-theme-argon && git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/lean/luci-theme-argon  #新的argon主题
 #全新的[argon-主题]此主题玩法很多,这里看说明【https://github.com/jerrykuku/luci-theme-argon/blob/18.06/README_ZH.md】
