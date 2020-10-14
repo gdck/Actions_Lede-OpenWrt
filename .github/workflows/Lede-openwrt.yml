@@ -137,7 +137,22 @@ jobs:
         name: OpenWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: openwrt/bin
 
-     #- name: organizer整理固件文件夹
+    - name: Upload firmware directory 上传固件在github空间
+      uses: actions/upload-artifact@master
+      if: steps.compiler.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
+      with:
+        name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+        
+    - name: 上传.config配置文件在github空间    
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
+      uses: actions/upload-artifact@master
+      with:
+        name: config.buildinfo_${{ env.FILE_DATE }}
+        path: ./config    
+
+   
+   #- name: organizer整理固件文件夹
      # id: organizer
      # run: |
      #   rm -rf config && mkdir config
@@ -158,20 +173,6 @@ jobs:
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
-
-    - name: Upload firmware directory 上传固件在github空间
-      uses: actions/upload-artifact@main
-      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
-      with:
-        name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE }}
-        
-    - name: 上传.config配置文件在github空间    
-      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
-      uses: actions/upload-artifact@master
-      with:
-        name: config.buildinfo_${{ env.FILE_DATE }}
-        path: ./config    
 
     - name: Upload firmware to cowtransfer
       id: cowtransfer
