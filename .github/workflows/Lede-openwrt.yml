@@ -13,6 +13,12 @@ name: Lede-OpenWrt 固件
 
 on:
   repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
 
 #编辑任意指定文件触发开始编译(去掉下面5个#开启,最下面一行是指定修改什么文件就触发编译,我现在是修改diy.config文件触发)
 #  push:
@@ -21,23 +27,15 @@ on:
 #    paths:
 #      - 'diy.config'
 
-
 #release发布触发开始编译(只是一个触发条件,不会发布的,又麻烦,没卵用,不用研究)
 #  release:
 #    types: published
-
-
 #定时触发开始编译(开启定时编译请先关闭SSH,要不然SSH没人管,会卡SSH编译失败)
 #  schedule:
 #    - cron: 0 8 */5 * *
-
-
 #点☆Star触发开始编译
   watch:
 #    types: started
-
-#手动点触发开始编译
-  workflow_dispatch: 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
   REPO_BRANCH: master
