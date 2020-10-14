@@ -137,26 +137,28 @@ jobs:
         name: OpenWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: openwrt/bin
 
-    - name: organizer整理固件文件夹
-      id: organizer
-      run: |
-        rm -rf config && mkdir config
-        find openwrt/bin/targets/ -name "*config.buildinfo*" | xargs -i mv -f {} config        
-        cd openwrt/bin/targets/*/*
-        rm -rf packages && mkdir packages
-        find -name "*.buildinfo*" | xargs -i mv -f {} packages
-        find -name "*sha256sums*" | xargs -i mv -f {} packages
-        rm -rf packages
-        echo "::set-env name=FIRMWARE::$PWD"
-        echo "::set-output name=status::success"
+     #- name: organizer整理固件文件夹
+     # id: organizer
+     # run: |
+     #   rm -rf config && mkdir config
+     #   find openwrt/bin/targets/ -name "*config.buildinfo*" | xargs -i mv -f {} config        
+     #   cd openwrt/bin/targets/*/*
+     #   rm -rf packages && mkdir packages
+     #   find -name "*.buildinfo*" | xargs -i mv -f {} packages
+     #   find -name "*sha256sums*" | xargs -i mv -f {} packages
+     #   rm -rf packages
+     #   echo "::set-env name=FIRMWARE::$PWD"
+     #   echo "::set-output name=status::success"
         
-    - name: 上传.config配置文件在github空间    
-      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
-      uses: actions/upload-artifact@master
-      with:
-        name: config.buildinfo_${{ env.FILE_DATE }}
-        path: ./config    
-    
+    - name: Organize files
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
     - name: Upload firmware directory 上传固件在github空间
       uses: actions/upload-artifact@main
       if: steps.organizer.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
@@ -164,14 +166,23 @@ jobs:
         name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
         
-    - name: Upload firmware to cowtransfer 上传固件到奶牛快传
+    - name: 上传.config配置文件在github空间    
+      if: steps.organizer.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
+      uses: actions/upload-artifact@master
+      with:
+        name: config.buildinfo_${{ env.FILE_DATE }}
+        path: ./config    
+
+    - name: Upload firmware to cowtransfer
+      id: cowtransfer
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
         echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
         
-    - name: Upload firmware to WeTransfer 上传固件到WeTransfer
+    - name: Upload firmware to WeTransfer
+      id: WeTransfer
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
