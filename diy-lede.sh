@@ -16,9 +16,8 @@ sed -i 's/OpenWrt/OpenWrt/g' ./package/base-files/files/bin/config_generate
 
 #本地启动脚本
 #启动脚本插入到 'exit 0' 之前即可随系统启动运行。
-sed -i '3i,/etc/init.d/samba stop' ./package/base-files/files/etc/rc.local
-sed -i '4i,/etc/init.d/samba disable' ./package/base-files/files/etc/rc.local
-
+sed -i '3i,/etc/init.d/samba stop' ./package/base-files/files/etc/rc.local #停止samba服务
+sed -i '4i,/etc/init.d/samba disable' ./package/base-files/files/etc/rc.local #禁止samba服务开机自动
 
 
 # 设置密码为空（安装固件时无需密码登陆，然后自己修改想要的密码）
