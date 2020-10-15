@@ -140,14 +140,15 @@ jobs:
       if: steps.compiler.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true'
       with:
         name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
-        path: ${{ env.FIRMWARE }}
+        #path: ${{ env.FIRMWARE }}
+        path: openwrt/bin/targets
         
-    - name: 上传.config配置文件在github空间    
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
-      uses: actions/upload-artifact@master
-      with:
-        name: config.buildinfo_${{ env.FILE_DATE }}
-        path: ./config    
+    #- name: 上传.config配置文件在github空间    
+    #  if: steps.compile.outputs.status == 'success' && env.UPLOAD_CONFIG == 'true'
+    #  uses: actions/upload-artifact@master
+    #  with:
+    #    name: config.buildinfo_${{ env.FILE_DATE }}
+    #    path: ./config    
 
    
    #- name: organizer整理固件文件夹
